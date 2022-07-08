@@ -1,4 +1,6 @@
-module.exports.SELECT_MEMO_LIST = "select * from memo";
+module.exports.SELECT_MEMO_LIST = "select * from memo order by id limit $1 offset ($2 - 1) * $1";
+
+module.exports.SELECT_MEMO_ALL = "select count(1) from memo;"
 
 module.exports.SELECT_MEMO_BYID = "select * from memo where id = $1";
 

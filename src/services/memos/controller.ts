@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { type } from 'os';
+import { listenerCount } from 'process';
 import { connection } from '../../config/dbconfig';
 
 const query = require('./querystring');
@@ -7,15 +8,38 @@ const query = require('./querystring');
 // 메모 리스트 API
 async function getMemoList(req: Request, res: Response) {
     console.log('getMemoList call');
-    const postdb = await connection.connect();
-    
 
-    postdb.query(query.SELECT_MEMO_LIST, [], function(err, results) {
+    let curpage = req.query.page_number;
+    let pageSize = req.query.page_size;
+    
+    if (!curpage) {
+        curpage = '1';
+    }
+    if (!pageSize) {
+        pageSize = '5';
+    }
+
+    const postdb = await connection.connect();
+    console.log('pageSize, curpage', pageSize, curpage)
+    postdb.query(query.SELECT_MEMO_LIST, [pageSize, curpage], function(err, results) {
         if (err) {
             console.log(err);
             return res.status(500).json({success: false, err});
         } else {
-            res.json({success: true, memoList: results.rows})
+            res.json({success: true, memoList: results.rows, page: curpage, page_num: pageSize})
+        }
+    })
+}
+
+// 메모 전체 개수 API
+async function getMemoCount(req: Request, res: Response) {
+    const postdb = await connection.connect();
+    postdb.query(query.SELECT_MEMO_ALL, [], function(err, results) {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({success: false, err});
+        } else {
+            res.json({success: true, allSize: results.rows})
         }
     })
 }
@@ -76,4 +100,4 @@ async function updateMemo(req: Request, res: Response) {
     });
 }
 
-export {getMemoList, getMemoById, register, updateMemo}
+export {getMemoList, getMemoCount, getMemoById, register, updateMemo}
