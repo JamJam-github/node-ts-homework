@@ -1,6 +1,5 @@
 import express from 'express'
-import router from './config/route'
-import testRoute from './controller/test'
+import memoRoute from './services/memos/route'
 
 const app = express();
 
@@ -9,22 +8,12 @@ app.use(express.urlencoded({
     extended: true
 }));
 
-app.get('/', (req, res, next) => {
-    // console.log('nodemon')
-    console.log(req.query)
-    const {name} = req.query
-    res.send(`Hello ${name}`)
-});
-
-app.get('/memo', (req, res, next) => {
-    console.log(req.query)
-    const {name} = req.query
-    res.send(`Hello ${name}`)
+app.get("/", (req, res) => {
+    res.json({message: "Welcome to my application."});
 });
 
 
-app.use(router);
-app.use(testRoute);
+app.use("/memos", memoRoute);
 
 app.listen(8080, () => {
     console.log('Server running')
