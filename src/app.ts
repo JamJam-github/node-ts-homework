@@ -1,5 +1,6 @@
 import express from 'express'
 import memoRoute from './services/memos/route'
+import userRoute from './services/users/route';
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.get("/", (req, res) => {
 
 
 app.use("/memos", memoRoute);
+app.use("/users", userRoute);
 
 app.listen(8080, () => {
     console.log('Server running')
