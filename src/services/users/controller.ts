@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { connection } from '../../config/dbconfig';
 import bcrypt from 'bcrypt';
+import {sign, verify} from '../../modules/jwt';
 
 const query = require('./querystring');
 
@@ -29,8 +30,6 @@ async function register(req: Request, res: Response) {
         const salt = await bcrypt.genSalt(saltRound);
         const hashedPW = await bcrypt.hash(req.body.password, salt);
 
-        // console.log('암호화된 비밀번호::', hashedPW);
-
         postdb.query(query.INSERT_USER, [req.body.id, hashedPW], function(err, results) {
             if (err) {
                 console.log(err);
@@ -51,8 +50,6 @@ async function register(req: Request, res: Response) {
 
 // 로그인 API
 async function login(req: Request, res: Response) {
-    console.log('login ::', req.body);
-
     for(var field of ['id', 'password']){
         if(!req.body[field]) {
             return res.json({success: false, code: 501, message: `필수 입력값이 누락되었습니다. (${field})`,  data: field});
@@ -64,10 +61,10 @@ async function login(req: Request, res: Response) {
     try {
         const results = await postdb.query(query.SELECT_USER, [req.body.id]);
         if (results.rowCount > 0) {
-            console.log(results.rows[0]['password']);
             const isMatch = await bcrypt.compare(req.body.password, results.rows[0]['password']);
             if (isMatch) {
-                res.status(200).json({loginSuccess: true, userId: req.body.id});
+                const jwtToken = await sign(results.rows[0]);
+                res.status(200).json({loginSuccess: true, userId: req.body.id, token: jwtToken.token, refreshToken: jwtToken.refreshToken});
             } else {
                 res.json({loginSuccess: false, code: 503, message: '비밀번호가 맞지 않습니다.'});
             }

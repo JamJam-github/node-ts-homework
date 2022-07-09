@@ -61,14 +61,14 @@ async function getMemoById(req: Request, res: Response) {
 // 메모 생성 API
 async function register(req: Request, res: Response) {
     console.log('register ::', req.body);
-    for(var field of ['title', 'content']){
+    for(var field of ['title', 'content', 'user_id']){
         if(!req.body[field]) {
             return res.json({success: false, code: 501, message: `입력값이 누락되었습니다. (${field})`,  data: field});
         }
     }
    
     const postdb = await connection.connect();
-    const params = [req.body.title, req.body.content];
+    const params = [req.body.title, req.body.content, req.body.user_id];
 
     postdb.query(query.INSERT_MEMO, params, function(err, results) {
         if (err) {
@@ -82,37 +82,64 @@ async function register(req: Request, res: Response) {
 
 // 메모 수정 API
 async function updateMemo(req: Request, res: Response) {
-    console.log('updateMemo ::', req.body);
-    console.log('updateMemo param::', req.params);
+    console.log('updateMemo');
+
+    // if (req['userId'] != req.body.user_id) {
+    //     return res.status(401).json({success: false, message: "작성자만 수정이 가능합니다."}); 
+    // }
 
     const postdb = await connection.connect();
-    const params = [req.body.title, req.body.content, req.params.id];
 
-    postdb.query(query.UPDATE_MEMO, params, function(err, results) {
+    postdb.query(query.SELECTE_MEMO_BYUSERID, [req.params.id, req['userId']], function(err, results) {
         if (err) {
             console.log(err);
             return res.status(500).json({success: false, err});
         } else {
-            res.json({success: true})
+            if (results.rowCount == 0) {
+                return res.status(403).json({success: false, message: "작성자만 수정이 가능합니다."});
+            } else {
+                const params = [req.body.title, req.body.content, req.params.id];
+
+                postdb.query(query.UPDATE_MEMO, params, function(err, results) {
+                    if (err) {
+                        console.log(err);
+                        return res.status(500).json({success: false, err});
+                    } else {
+                        res.json({success: true})
+                    }
+                });
+            }
         }
     });
+
+    
 }
 
 // 메모 삭제 API
 async function deleteMemo(req: Request, res: Response) {
-    console.log('deleteMemo param::', req.params);
+    console.log('deleteMemo ::', req['userId']);
 
     const postdb = await connection.connect();
-    const params = [req.params.id];
-
-    postdb.query(query.DELETE_MEMO, params, function(err, results) {
+    postdb.query(query.SELECTE_MEMO_BYUSERID, [req.params.id, req['userId']], function(err, results) {
         if (err) {
             console.log(err);
             return res.status(500).json({success: false, err});
         } else {
-            res.json({success: true})
+            if (results.rowCount == 0) {
+                return res.status(403).json({success: false, message: "작성자만 삭제가 가능합니다."});
+            } else {
+                postdb.query(query.DELETE_MEMO, [req.params.id], function(err, results) {
+                    if (err) {
+                        console.log(err);
+                        return res.status(500).json({success: false, err});
+                    } else {
+                        res.json({success: true})
+                    }
+                });
+            }
         }
     });
 }
+
 
 export {getMemoList, getMemoCount, getMemoById, register, updateMemo, deleteMemo}

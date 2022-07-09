@@ -12,5 +12,13 @@ export const env = {
         database: process.env.DB_DATABASE,
         password: process.env.DB_PASSWORD,
         port: Number(process.env.DB_PORT)
+    },
+    secret_key: {
+        jwt: process.env.TOKEN_SECRET
+    },
+    options: {
+        algorithm: "HS256",
+        expiresIn: "30m",
+        issuer: "issuer"
     }
 }

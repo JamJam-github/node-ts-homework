@@ -1,4 +1,3 @@
-import { resolve } from "path";
 import { Pool } from "pg";
 import { env } from "./env";
 
@@ -17,6 +16,7 @@ export const connection = new Pool({
 connection.connect(function(error, args) {
     if (error) {
         console.error(error);
+        process.exit();
     } else {
         console.log('postgresql connection');
     }
