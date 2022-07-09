@@ -13,3 +13,5 @@ module.exports.UPDATE_MEMO = `
     where id = $3
     ;
 `;
+
+module.exports.DELETE_MEMO = "delete from memo where id = $1";

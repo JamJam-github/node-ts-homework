@@ -1,6 +1,4 @@
 import express, { Request, Response } from 'express';
-import { type } from 'os';
-import { listenerCount } from 'process';
 import { connection } from '../../config/dbconfig';
 
 const query = require('./querystring');
@@ -100,4 +98,21 @@ async function updateMemo(req: Request, res: Response) {
     });
 }
 
-export {getMemoList, getMemoCount, getMemoById, register, updateMemo}
+// 메모 삭제 API
+async function deleteMemo(req: Request, res: Response) {
+    console.log('deleteMemo param::', req.params);
+
+    const postdb = await connection.connect();
+    const params = [req.params.id];
+
+    postdb.query(query.DELETE_MEMO, params, function(err, results) {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({success: false, err});
+        } else {
+            res.json({success: true})
+        }
+    });
+}
+
+export {getMemoList, getMemoCount, getMemoById, register, updateMemo, deleteMemo}
