@@ -1,5 +1,6 @@
 module.exports.SELECT_MEMO_LIST = `
-    select * from memo 
+    select id, title, content, user_id
+    from memo 
     order by id 
     limit $1 
     offset ($2 - 1) * $1
@@ -8,7 +9,11 @@ module.exports.SELECT_MEMO_LIST = `
 
 module.exports.SELECT_MEMO_ALL = "select count(1) from memo;"
 
-module.exports.SELECT_MEMO_BYID = "select * from memo where id = $1";
+module.exports.SELECT_MEMO_BYID = `
+    select id, title, content, user_id
+    from memo 
+    where id = $1
+`;
 
 module.exports.INSERT_MEMO = `
     insert into memo (title, content, user_id) 
@@ -30,4 +35,10 @@ module.exports.SELECTE_MEMO_BYUSERID = `
     from memo 
     where id = $1
     and user_id = $2
+`;
+
+module.exports.SELECTE_REPLY_BYMEMOID = `
+    select reply_id, comment, user_id
+    from reply 
+    where memo_id = $1
 `;

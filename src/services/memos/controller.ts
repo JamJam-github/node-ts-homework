@@ -53,7 +53,15 @@ async function getMemoById(req: Request, res: Response) {
             console.log(err);
             return res.status(500).json({success: false, err});
         } else {
-            res.json({success: true, memoList: results.rows})
+            const memoList = results.rows;
+            postdb.query(query.SELECTE_REPLY_BYMEMOID, params, function(err, results) {
+                if (err) {
+                    console.log(err);
+                    return res.status(500).json({success: false, err});
+                } else {
+                    res.json({success: true, memoList: memoList, replyList: results.rows});
+                }
+            });
         }
     })
 }
