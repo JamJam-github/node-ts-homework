@@ -1,6 +1,6 @@
 import randToken from 'rand-token';
 import jwt from 'jsonwebtoken';
-import { env } from "../../src/config/env";
+import { env } from "../config/env";
 
 
 const secretKey = env.secret_key.jwt as string;
