@@ -14,14 +14,22 @@ async function createReply(req: Request, res: Response) {
     const postdb = await connection.connect();
     const params = [req.body.memo_id, req.body.comment, req.body.user_id];
 
-    postdb.query(query.INSERT_REPLY, params, function(err, results) {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({success: false, err});
-        } else {
-            res.json({success: true, result: results.rows})
-        }
-    });
+    try {
+        postdb.query(query.INSERT_REPLY, params, function(err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({success: false, err});
+            } else {
+                res.json({success: true, result: results.rows})
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        await postdb.query('ROLLBACK');
+        res.status(500).json({success: false, message: "Server Error"});
+    } finally {
+        postdb.release();
+    }
 }
 
 
@@ -30,14 +38,22 @@ async function updateReply(req: Request, res: Response) {
     const postdb = await connection.connect();
     const params = [req.body.comment, req.params.replyId];
 
-    postdb.query(query.UPDATE_REPLY, params, function(err, results) {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({success: false, err});
-        } else {
-            res.json({success: true, result: results.rowCount})
-        }
-    });
+    try {
+        postdb.query(query.UPDATE_REPLY, params, function(err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({success: false, err});
+            } else {
+                res.json({success: true, result: results.rowCount})
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        await postdb.query('ROLLBACK');
+        res.status(500).json({success: false, message: "Server Error"});
+    } finally {
+        postdb.release();
+    }
 }
 
 // 댓글 삭제 API
@@ -45,14 +61,22 @@ async function deleteReply(req: Request, res: Response) {
     const postdb = await connection.connect();
     const params = [req.params.replyId];
 
-    postdb.query(query.DELETE_REPLY, params, function(err, results) {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({success: false, err});
-        } else {
-            res.json({success: true, result: results.rowCount})
-        }
-    });
+    try {
+        postdb.query(query.DELETE_REPLY, params, function(err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({success: false, err});
+            } else {
+                res.json({success: true, result: results.rowCount})
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        await postdb.query('ROLLBACK');
+        res.status(500).json({success: false, message: "Server Error"});
+    } finally {
+        postdb.release();
+    }
 }
 
 export {createReply, updateReply, deleteReply}

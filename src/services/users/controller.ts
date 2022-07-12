@@ -1,7 +1,7 @@
-import express, { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { connection } from '../../config/dbconfig';
 import bcrypt from 'bcrypt';
-import {sign, verify} from '../../modules/jwt';
+import { sign } from '../../modules/jwt';
 
 const query = require('./querystring');
 
@@ -40,7 +40,7 @@ async function register(req: Request, res: Response) {
         })
     } catch (error) {
         console.error(error);
-        await postdb.query('ROLLBACK')
+        await postdb.query('ROLLBACK');
         res.status(500).json({success: false, message: "Server Error"});
     } finally {
         postdb.release();
@@ -73,6 +73,7 @@ async function login(req: Request, res: Response) {
         }
     } catch (error) {
         console.error(error);
+        await postdb.query('ROLLBACK');
         res.status(500).json({success: false, message: "Server Error"});
     } finally {
         postdb.release();

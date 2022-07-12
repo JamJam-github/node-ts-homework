@@ -10,6 +10,7 @@ export const connection = new Pool({
     password: env.database.password,
     port: env.database.port,
     max: 10,
+    connectionTimeoutMillis: 30000,
     idleTimeoutMillis: 30000
 });
 

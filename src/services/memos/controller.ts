@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { connection } from '../../config/dbconfig';
 
 const query = require('./querystring');
@@ -18,28 +18,46 @@ async function getMemoList(req: Request, res: Response) {
     }
 
     const postdb = await connection.connect();
-    console.log('pageSize, curpage', pageSize, curpage)
-    postdb.query(query.SELECT_MEMO_LIST, [pageSize, curpage], function(err, results) {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({success: false, err});
-        } else {
-            res.json({success: true, memoList: results.rows, page: curpage, page_num: pageSize})
-        }
-    })
+    console.log('pageSize, curpage', pageSize, curpage);
+
+    try {
+        postdb.query(query.SELECT_MEMO_LIST, [pageSize, curpage], function(err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({success: false, err});
+            } else {
+                res.json({success: true, memoList: results.rows, page: curpage, page_size: pageSize})
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        await postdb.query('ROLLBACK');
+        res.status(500).json({success: false, message: "Server Error"});
+    } finally {
+        postdb.release();
+    }
 }
 
 // 메모 전체 개수 API
 async function getMemoCount(req: Request, res: Response) {
     const postdb = await connection.connect();
-    postdb.query(query.SELECT_MEMO_ALL, [], function(err, results) {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({success: false, err});
-        } else {
-            res.json({success: true, allSize: results.rows})
-        }
-    })
+
+    try {
+        postdb.query(query.SELECT_MEMO_ALL, [], function(err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({success: false, err});
+            } else {
+                res.json({success: true, allSize: results.rows})
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        await postdb.query('ROLLBACK');
+        res.status(500).json({success: false, message: "Server Error"});
+    } finally {
+        postdb.release();
+    }
 }
 
 // 메모 상세보기 API
@@ -48,22 +66,30 @@ async function getMemoById(req: Request, res: Response) {
     const postdb = await connection.connect();
     const params = [req.params.id];
 
-    postdb.query(query.SELECT_MEMO_BYID, params, function(err, results) {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({success: false, err});
-        } else {
-            const memoList = results.rows;
-            postdb.query(query.SELECTE_REPLY_BYMEMOID, params, function(err, results) {
-                if (err) {
-                    console.log(err);
-                    return res.status(500).json({success: false, err});
-                } else {
-                    res.json({success: true, memoList: memoList, replyList: results.rows});
-                }
-            });
-        }
-    })
+    try {
+        postdb.query(query.SELECT_MEMO_BYID, params, function(err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({success: false, err});
+            } else {
+                const memoList = results.rows;
+                postdb.query(query.SELECTE_REPLY_BYMEMOID, params, function(err, results) {
+                    if (err) {
+                        console.log(err);
+                        return res.status(500).json({success: false, err});
+                    } else {
+                        res.json({success: true, memoList: memoList, replyList: results.rows});
+                    }
+                });
+            }
+        })
+    } catch (error) {
+        console.error(error);
+        await postdb.query('ROLLBACK');
+        res.status(500).json({success: false, message: "Server Error"});
+    } finally {
+        postdb.release();
+    }
 }
 
 // 메모 생성 API
@@ -78,48 +104,59 @@ async function register(req: Request, res: Response) {
     const postdb = await connection.connect();
     const params = [req.body.title, req.body.content, req.body.user_id];
 
-    postdb.query(query.INSERT_MEMO, params, function(err, results) {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({success: false, err});
-        } else {
-            res.json({success: true, result: results.rows})
-        }
-    })
+    try {
+        postdb.query(query.INSERT_MEMO, params, function(err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({success: false, err});
+            } else {
+                res.json({success: true, result: results.rows})
+            }
+        })
+    } catch (error) {
+        console.error(error);
+        await postdb.query('ROLLBACK');
+        res.status(500).json({success: false, message: "Server Error"});
+    } finally {
+        postdb.release();
+    }
 }
 
 // 메모 수정 API
 async function updateMemo(req: Request, res: Response) {
     console.log('updateMemo');
 
-    // if (req['userId'] != req.body.user_id) {
-    //     return res.status(401).json({success: false, message: "작성자만 수정이 가능합니다."}); 
-    // }
-
     const postdb = await connection.connect();
 
-    postdb.query(query.SELECTE_MEMO_BYUSERID, [req.params.id, req['userId']], function(err, results) {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({success: false, err});
-        } else {
-            if (results.rowCount == 0) {
-                return res.status(403).json({success: false, message: "작성자만 수정이 가능합니다."});
+    try {
+        postdb.query(query.SELECTE_MEMO_BYUSERID, [req.params.id, req['userId']], function(err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({success: false, err});
             } else {
-                const params = [req.body.title, req.body.content, req.params.id];
+                if (results.rowCount == 0) {
+                    return res.status(403).json({success: false, message: "작성자만 수정이 가능합니다."});
+                } else {
+                    const params = [req.body.title, req.body.content, req.params.id];
 
-                postdb.query(query.UPDATE_MEMO, params, function(err, results) {
-                    if (err) {
-                        console.log(err);
-                        return res.status(500).json({success: false, err});
-                    } else {
-                        res.json({success: true})
-                    }
-                });
+                    postdb.query(query.UPDATE_MEMO, params, function(err, results) {
+                        if (err) {
+                            console.log(err);
+                            return res.status(500).json({success: false, err});
+                        } else {
+                            res.json({success: true})
+                        }
+                    });
+                }
             }
-        }
-    });
-
+        });
+    } catch (error) {
+        console.error(error);
+        await postdb.query('ROLLBACK');
+        res.status(500).json({success: false, message: "Server Error"});
+    } finally {
+        postdb.release();
+    }
     
 }
 
@@ -128,25 +165,34 @@ async function deleteMemo(req: Request, res: Response) {
     console.log('deleteMemo ::', req['userId']);
 
     const postdb = await connection.connect();
-    postdb.query(query.SELECTE_MEMO_BYUSERID, [req.params.id, req['userId']], function(err, results) {
-        if (err) {
-            console.log(err);
-            return res.status(500).json({success: false, err});
-        } else {
-            if (results.rowCount == 0) {
-                return res.status(403).json({success: false, message: "작성자만 삭제가 가능합니다."});
+
+    try {
+        postdb.query(query.SELECTE_MEMO_BYUSERID, [req.params.id, req['userId']], function(err, results) {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({success: false, err});
             } else {
-                postdb.query(query.DELETE_MEMO, [req.params.id], function(err, results) {
-                    if (err) {
-                        console.log(err);
-                        return res.status(500).json({success: false, err});
-                    } else {
-                        res.json({success: true})
-                    }
-                });
+                if (results.rowCount == 0) {
+                    return res.status(403).json({success: false, message: "작성자만 삭제가 가능합니다."});
+                } else {
+                    postdb.query(query.DELETE_MEMO, [req.params.id], function(err, results) {
+                        if (err) {
+                            console.log(err);
+                            return res.status(500).json({success: false, err});
+                        } else {
+                            res.json({success: true})
+                        }
+                    });
+                }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error(error);
+        await postdb.query('ROLLBACK');
+        res.status(500).json({success: false, message: "Server Error"});
+    } finally {
+        postdb.release();
+    }
 }
 
 
