@@ -22,3 +22,5 @@ app.use("/replys", replyRoute);
 app.listen(8080, () => {
     console.log('Server running')
 });
+
+export {app};
