@@ -7,11 +7,7 @@
 
 
 ### 실행 방법
-1) Postgresql Database 생성
-- init.sql 파일에 테이블 생성 쿼리가 포함되어 있습니다.
-해당 스크립트를 수행해주세요.
-
-2) env/server.env 정보 생성
+1) env/server.env 정보 생성
 ```
 DB_HOST=호스트명
 DB_USER=유저명
